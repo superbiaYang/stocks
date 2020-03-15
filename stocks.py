@@ -5,8 +5,12 @@ import math
 import mysql.connector
 import tushare as ts
 
-logging.basicConfig(filename="stocks.log", level=logging.DEBUG, filemode="w")
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
+sh = logging.StreamHandler()
+logger.addHandler(sh)
+fh = logging.FileHandler(filename="stocks.log", mode="w")
+logger.addHandler(fh)
 
 
 def create_cnx():
@@ -162,9 +166,7 @@ def daily_job():
     update_fundamental_info(last_year, last_season)
 
 
-def init_database():
-    update_stocks()
-    update_daily_hist()
+def init_fundamental_info():
     start_year = 1992
     start_season = 2
     now = datetime.datetime.now()
@@ -175,13 +177,22 @@ def init_database():
     season = start_season
     while year*10 + season <= end_year*10+end_season:
         update_fundamental_info(year, season)
+        season = season + 1
+        if season == 5:
+            season = 1
+            year = year + 1
+
+def init_database():
+    update_stocks()
+    update_daily_hist()
+    init_fundamental_info()
 
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) == 0:
+    if len(sys.argv) == 1:
         daily_job()
-    elif len(sys.argv) == 1 and sys.argv[1] == "init":
+    elif len(sys.argv) == 2 and sys.argv[1] == "init":
         init_database()
     else:
         print("USAGE: python stocks.py [init]")
